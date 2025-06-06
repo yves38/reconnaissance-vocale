@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Reconnaissance vocale continue</title>
+  <style>
+    body { font-family: sans-serif; padding: 2em; }
+    #output { border: 1px solid #ccc; padding: 1em; margin-top: 1em; min-height: 4em; }
+  </style>
+</head>
+<body>
+  <h1>Reconnaissance vocale continue</h1>
+  <p>Parlez dans votre micro. Le texte reconnu s'affichera ci-dessous :</p>
+  <div id="output"></div>
+
+  <script>
+    // Vérifie que l'API est disponible
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      alert("La reconnaissance vocale n'est pas prise en charge par ce navigateur.");
+    } else {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'fr-FR';
+      recognition.continuous = true;        // Important pour éviter les interruptions
+      recognition.interimResults = true;    // Pour recevoir des résultats en temps réel
+
+      let recognizing = false;
+      let output = document.getElementById('output');
+
+      function startRecognition() {
+        if (!recognizing) {
+          try {
+            recognition.start();
+          } catch (e) {
+            console.warn("Reconnaissance déjà en cours...");
+          }
+        }
+      }
+
+      recognition.onstart = () => {
+        recognizing = true;
+        console.log("Reconnaissance démarrée");
+      };
+
+      recognition.onend = () => {
+        recognizing = false;
+        console.log("Reconnaissance arrêtée, redémarrage...");
+        setTimeout(() => startRecognition(), 1000);
+      };
+
+      recognition.onerror = (event) => {
+        console.error("Erreur:", event.error);
+        if (event.error === 'not-allowed') {
+          alert("L'accès au micro est refusé.");
+        }
+      };
+
+      recognition.onresult = (event) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          transcript += event.results[i][0].transcript;
+        }
+        output.innerText = transcript;
+      };
+
+      // Lancer automatiquement au chargement
+      startRecognition();
+    }
+  </script>
+</body>
+</html>
